@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>口コミ作成アプリ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap');
+
+:root {
+–bg: #0D0D12;
+–card: #16161E;
+–card2: #1E1E28;
+–border: #28283A;
+–gold: #D4A843;
+–gold-l: #F0C868;
+–gold-glow: rgba(212,168,67,0.14);
+–text: #F0EDE8;
+–sub: #80808E;
+–line: #00B900;
+–green: #06D6A0;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+background: radial-gradient(ellipse at top, #1a1525 0%, var(–bg) 65%);
+min-height: 100vh;
+font-family: ‘Noto Sans JP’, ‘Hiragino Sans’, sans-serif;
+color: var(–text);
+display: flex;
+justify-content: center;
+padding: 20px 16px 48px;
+}
+
+#app { width: 100%; max-width: 480px; }
+
+/* ── SCREEN ── */
+.screen { display: none; animation: fadeUp 0.35s ease; }
+.screen.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── CARD ── */
+.card {
+background: var(–card);
+border-radius: 24px;
+padding: 26px 22px;
+border: 1px solid var(–border);
+box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+margin-top: 8px;
+}
+
+/* ── TOP ROW ── */
+.top-row {
+display: flex;
+align-items: center;
+gap: 8px;
+margin-bottom: 18px;
+}
+.logo-mark { font-size: 18px; color: var(–gold); text-shadow: 0 0 14px var(–gold); }
+.app-title { flex: 1; font-size: 15px; font-weight: 700; letter-spacing: .05em; }
+.admin-link {
+background: none; border: 1px solid var(–border); border-radius: 50px;
+padding: 4px 12px; font-size: 11px; cursor: pointer; color: var(–sub);
+font-weight: 600; font-family: inherit;
+}
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+display: flex; gap: 5px; margin-bottom: 22px;
+}
+.prog-seg {
+flex: 1; height: 4px; border-radius: 2px;
+background: var(–border); transition: background .3s;
+}
+.prog-seg.done { background: rgba(212,168,67,.4); }
+.prog-seg.active { background: var(–gold); }
+
+/* ── HEADINGS ── */
+h2 { font-size: 18px; font-weight: 700; line-height: 1.55; margin-bottom: 5px; }
+.sub-text { font-size: 12px; color: var(–sub); margin-bottom: 16px; }
+
+/* ── SELECTOR GRID ── */
+.sel-section { margin-bottom: 18px; }
+.sel-label {
+font-size: 12px; font-weight: 700; color: var(–sub);
+margin-bottom: 9px; display: flex; align-items: center; gap: 6px;
+}
+.sel-grid { display: grid; gap: 7px; }
+.sel-grid.col2 { grid-template-columns: repeat(2,1fr); }
+.sel-grid.col3 { grid-template-columns: repeat(3,1fr); }
+
+.sel-btn {
+background: var(–card2); border: 1.5px solid var(–border);
+border-radius: 12px; padding: 11px 8px; font-size: 13px;
+cursor: pointer; color: var(–sub); font-weight: 600;
+font-family: inherit; transition: all .18s;
+display: flex; align-items: center; justify-content: center; gap: 5px;
+line-height: 1.3; text-align: center;
+}
+.sel-btn:hover { border-color: rgba(212,168,67,.4); color: rgba(212,168,67,.7); }
+.sel-btn.selected {
+background: var(–gold-glow); border-color: var(–gold);
+color: var(–gold); box-shadow: 0 0 14px var(–gold-glow);
+}
+
+/* ── CHIP KEYWORDS ── */
+.chip-area { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.chip {
+background: var(–card2); border: 1.5px solid var(–border);
+border-radius: 50px; padding: 9px 15px; font-size: 13px;
+cursor: pointer; color: var(–sub); font-weight: 500;
+font-family: inherit; transition: all .15s;
+}
+.chip:hover { border-color: rgba(212,168,67,.35); }
+.chip.selected {
+background: var(–gold-glow); border-color: var(–gold);
+color: var(–gold); font-weight: 700;
+}
+
+/* ── RATING ── */
+.rating-box {
+background: var(–card2); border: 1px solid var(–border);
+border-radius: 14px; padding: 14px 16px; margin-top: 14px;
+}
+.rating-label { font-size: 13px; color: var(–sub); font-weight: 700; margin-bottom: 8px; }
+.star-row { display: flex; align-items: center; gap: 4px; }
+.star-btn { background: none; border: none; cursor: pointer; padding: 2px; font-size: 30px; transition: all .15s; color: var(–border); }
+.star-btn.on { color: var(–gold); text-shadow: 0 0 10px var(–gold); }
+.rating-val { font-size: 16px; font-weight: 700; color: var(–gold); margin-left: 8px; }
+
+/* ── PROFILE PILL ── */
+.profile-pill {
+display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+background: var(–card2); border: 1px solid var(–border);
+border-radius: 50px; padding: 8px 14px; margin-bottom: 16px;
+}
+.pill-item { font-size: 12px; color: var(–gold); font-weight: 600; }
+.pill-dot { font-size: 12px; color: var(–border); }
+
+/* ── BUTTONS ── */
+.btn-gold {
+background: linear-gradient(135deg, var(–gold), var(–gold-l));
+color: #1A1200; border: none; border-radius: 50px;
+padding: 15px 28px; font-size: 15px; font-weight: 800;
+cursor: pointer; font-family: inherit; letter-spacing: .03em;
+box-shadow: 0 6px 20px rgba(212,168,67,.35); width: 100%;
+transition: all .2s;
+}
+.btn-gold:disabled { background: var(–card2); color: var(–sub); box-shadow: none; cursor: not-allowed; }
+.btn-gold.green { background: linear-gradient(135deg,var(–green),#04B890); box-shadow: 0 6px 20px rgba(6,214,160,.3); }
+
+.btn-ghost {
+background: none; border: 1.5px solid var(–border); border-radius: 50px;
+padding: 12px 20px; font-size: 14px; cursor: pointer;
+color: var(–sub); font-weight: 600; font-family: inherit; transition: all .2s;
+}
+.btn-ghost:hover { border-color: rgba(212,168,67,.3); }
+
+.nav-row { display: flex; gap: 10px; margin-top: 22px; }
+
+/* ── SPINNER ── */
+.spinner-screen {
+text-align: center; padding: 60px 32px;
+}
+.spinner {
+width: 54px; height: 54px; border: 4px solid var(–border);
+border-top-color: var(–gold); border-radius: 50%;
+animation: spin .75s linear infinite; margin: 0 auto 22px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.load-title { font-size: 18px; font-weight: 700; margin-bottom: 7px; }
+.load-sub { font-size: 13px; color: var(–sub); }
+
+/* ── RESULT ── */
+.result-top { text-align: center; margin-bottom: 20px; }
+.celebrate { font-size: 38px; display: block; margin-bottom: 6px; }
+.result-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+.meta-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; }
+.meta-tag {
+background: var(–card2); border: 1px solid var(–border);
+border-radius: 50px; padding: 4px 12px; font-size: 12px; color: var(–sub); font-weight: 600;
+}
+.meta-tag.gold { color: var(–gold); border-color: rgba(212,168,67,.35); }
+
+.review-box {
+position: relative; background: var(–card2); border: 1px solid var(–border);
+border-radius: 18px; padding: 22px 20px 20px; margin-top: 18px; margin-bottom: 14px;
+}
+.review-quote {
+position: absolute; top: 4px; left: 14px; font-size: 52px;
+color: var(–gold); opacity: .15; line-height: 1; font-family: serif; pointer-events: none;
+}
+#review-text {
+font-size: 14px; line-height: 2.1; color: var(–text);
+white-space: pre-wrap; display: block;
+}
+
+.used-words { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 18px; }
+.used-label { font-size: 11px; color: var(–sub); font-weight: 700; margin-right: 3px; }
+.used-chip {
+background: rgba(212,168,67,.1); border: 1px solid rgba(212,168,67,.25);
+border-radius: 50px; padding: 3px 10px; font-size: 11px; color: var(–gold); font-weight: 600;
+}
+
+.action-row { display: flex; gap: 10px; margin-bottom: 13px; }
+.btn-copy {
+flex: 1; background: var(–card2); border: 1.5px solid var(–border);
+border-radius: 50px; padding: 13px; font-size: 14px; font-weight: 700;
+cursor: pointer; color: var(–text); font-family: inherit; transition: all .2s;
+}
+.btn-copy.copied { border-color: var(–green); color: var(–green); }
+.btn-line {
+flex: 1; background: var(–line); border: none; border-radius: 50px;
+padding: 13px; font-size: 14px; font-weight: 700; cursor: pointer;
+color: #fff; font-family: inherit;
+display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.line-badge {
+background: #fff; color: var(–line); border-radius: 4px;
+padding: 1px 5px; font-size: 10px; font-weight: 900;
+}
+
+.guide-box {
+background: linear-gradient(135deg,rgba(212,168,67,.07),rgba(212,168,67,.03));
+border: 1px solid rgba(212,168,67,.17); border-radius: 13px;
+padding: 13px 15px; text-align: center; margin-bottom: 16px;
+}
+.guide-text { font-size: 13px; color: var(–sub); line-height: 1.85; }
+.guide-text strong { color: var(–gold); }
+
+/* ── ADMIN ── */
+.badge {
+display: inline-block; background: var(–gold-glow); color: var(–gold);
+border-radius: 50px; padding: 4px 12px; font-size: 11px; font-weight: 700;
+margin-bottom: 6px; border: 1px solid rgba(212,168,67,.25);
+}
+.cat-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+.cat-tab {
+background: var(–card2); border: 1.5px solid var(–border);
+border-radius: 50px; padding: 7px 13px; font-size: 12px;
+cursor: pointer; color: var(–sub); font-weight: 600; font-family: inherit;
+display: flex; align-items: center; gap: 5px; transition: all .15s;
+}
+.cat-tab.active { background: var(–gold-glow); border-color: var(–gold); color: var(–gold); }
+.cat-count { font-size: 10px; opacity: .7; }
+
+.add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.add-input {
+flex: 1; background: var(–card2); border: 1.5px solid var(–border);
+border-radius: 11px; padding: 11px 14px; font-size: 14px; color: var(–text);
+outline: none; font-family: inherit;
+}
+.add-input::placeholder { color: #444455; }
+.add-btn {
+background: linear-gradient(135deg,var(–gold),var(–gold-l));
+color: #1A1200; border: none; border-radius: 11px; padding: 11px 16px;
+font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap;
+}
+
+.kw-area {
+display: flex; flex-wrap: wrap; gap: 7px;
+background: var(–card2); border: 1px solid var(–border);
+border-radius: 14px; padding: 14px; min-height: 90px; margin-bottom: 20px;
+}
+.kw-chip {
+background: var(–card); border: 1px solid var(–border);
+border-radius: 50px; padding: 5px 11px 5px 14px;
+font-size: 12px; color: var(–sub);
+display: flex; align-items: center; gap: 7px;
+}
+.kw-del {
+background: none; border: none; cursor: pointer;
+color: #555566; font-size: 15px; line-height: 1; padding: 0;
+}
+.kw-empty { font-size: 13px; color: #444455; margin: auto; }
+
+.admin-footer { display: flex; justify-content: flex-end; gap: 10px; align-items: center; }
+.count-badge {
+font-size: 13px; color: var(–sub); font-weight: 700;
+background: var(–card2); border: 1px solid var(–border);
+border-radius: 50px; padding: 5px 14px;
+}
+
+/* ── START SCREEN ── */
+.start-glow {
+position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
+width: 260px; height: 260px;
+background: radial-gradient(circle, rgba(212,168,67,.12) 0%, transparent 70%);
+pointer-events: none;
+}
+.start-inner { position: relative; text-align: center; }
+.start-logo { font-size: 34px; color: var(–gold); text-shadow: 0 0 20px var(–gold); display: block; margin-bottom: 14px; }
+.start-title { font-size: 24px; font-weight: 800; line-height: 1.5; margin-bottom: 12px; }
+.start-desc { font-size: 14px; color: var(–sub); line-height: 1.9; margin-bottom: 6px; }
+.start-note {
+display: inline-block; margin-top: 4px;
+background: var(–gold-glow); color: var(–gold);
+border-radius: 50px; padding: 3px 13px; font-size: 12px; font-weight: 700;
+border: 1px solid rgba(212,168,67,.25);
+}
+.store-list { display: flex; flex-direction: column; gap: 9px; margin: 22px 0 24px; }
+.store-btn {
+display: flex; align-items: center; gap: 10px;
+background: var(–card2); border: 2px solid var(–border); border-radius: 14px;
+padding: 14px 18px; cursor: pointer; color: var(–sub); font-size: 15px; font-weight: 600;
+font-family: inherit; transition: all .18s; text-align: left;
+}
+.store-btn:hover { border-color: rgba(212,168,67,.4); }
+.store-btn.selected { border-color: var(–gold); color: var(–gold); background: var(–gold-glow); box-shadow: 0 0 18px var(–gold-glow); }
+.store-icon { font-size: 18px; }
+.store-name { flex: 1; }
+.store-check { font-size: 16px; opacity: 0; transition: opacity .2s; }
+.store-btn.selected .store-check { opacity: 1; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(–border); border-radius: 2px; }
+</style>
+
+</head>
+<body>
+<div id="app">
+
+  <!-- ════════ START ════════ -->
+
+  <div id="screen-start" class="screen active">
+    <div class="card" style="position:relative;overflow:hidden;">
+      <div class="start-glow"></div>
+      <div class="top-row">
+        <span class="logo-mark">✦</span>
+        <span class="app-title">口コミ作成アプリ</span>
+        <button class="admin-link" onclick="showAdmin()">管理者</button>
+      </div>
+      <div class="start-inner">
+        <span class="start-logo">✦</span>
+        <h1 class="start-title">口コミを書いて<br>プレゼントをもらおう！</h1>
+        <p class="start-desc">
+          いくつかの質問に答えるだけで<br>
+          本格的な口コミ文章が自動で完成します
+        </p>
+        <span class="start-note">所要時間：約1〜2分</span>
+
+```
+    <div class="store-list" id="store-list">
+      <button class="store-btn" onclick="selectStore(this,'久留米店')">
+        <span class="store-icon">📍</span>
+        <span class="store-name">久留米店</span>
+        <span class="store-check">✓</span>
+      </button>
+      <button class="store-btn" onclick="selectStore(this,'筑紫野店')">
+        <span class="store-icon">📍</span>
+        <span class="store-name">筑紫野店</span>
+        <span class="store-check">✓</span>
+      </button>
+      <button class="store-btn" onclick="selectStore(this,'大橋店')">
+        <span class="store-icon">📍</span>
+        <span class="store-name">大橋店</span>
+        <span class="store-check">✓</span>
+      </button>
+    </div>
+
+    <button class="btn-gold" id="start-btn" disabled onclick="goToProfile()">
+      店舗を選んでください
+    </button>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ════════ PROFILE ════════ -->
+
+  <div id="screen-profile" class="screen">
+    <div class="card">
+      <div class="top-row">
+        <span class="logo-mark">✦</span>
+        <span class="app-title">口コミ作成</span>
+        <button class="admin-link" onclick="showAdmin()">管理者</button>
+      </div>
+      <div class="progress-bar" id="prog-profile"></div>
+
+```
+  <h2>あなたのことを教えてください</h2>
+  <p class="sub-text">口コミの文章をあなたに合わせて生成します</p>
+
+  <!-- 年代 -->
+  <div class="sel-section">
+    <p class="sel-label">🎂 年代</p>
+    <div class="sel-grid col3" id="age-grid">
+      <button class="sel-btn" onclick="selectAttr('age',this,'10代')">10代</button>
+      <button class="sel-btn" onclick="selectAttr('age',this,'20代前半')">20代前半</button>
+      <button class="sel-btn" onclick="selectAttr('age',this,'20代後半')">20代後半</button>
+      <button class="sel-btn" onclick="selectAttr('age',this,'30代')">30代</button>
+      <button class="sel-btn" onclick="selectAttr('age',this,'40代')">40代</button>
+      <button class="sel-btn" onclick="selectAttr('age',this,'50代〜')">50代〜</button>
+    </div>
+  </div>
+
+  <!-- 性別 -->
+  <div class="sel-section">
+    <p class="sel-label">👤 性別</p>
+    <div class="sel-grid col3" id="gender-grid">
+      <button class="sel-btn" onclick="selectAttr('gender',this,'女性')">👩 女性</button>
+      <button class="sel-btn" onclick="selectAttr('gender',this,'男性')">👨 男性</button>
+      <button class="sel-btn" onclick="selectAttr('gender',this,'回答しない')">🙂 その他</button>
+    </div>
+  </div>
+
+  <!-- 職業 -->
+  <div class="sel-section">
+    <p class="sel-label">💼 職業</p>
+    <div class="sel-grid col2" id="job-grid">
+      <button class="sel-btn" onclick="selectAttr('job',this,'学生')">🎓 学生</button>
+      <button class="sel-btn" onclick="selectAttr('job',this,'会社員')">💼 会社員</button>
+      <button class="sel-btn" onclick="selectAttr('job',this,'パート・アルバイト')">⏰ パート・アルバイト</button>
+      <button class="sel-btn" onclick="selectAttr('job',this,'自営業・フリーランス')">🖥 自営業・フリーランス</button>
+      <button class="sel-btn" onclick="selectAttr('job',this,'主婦・主夫')">🏠 主婦・主夫</button>
+      <button class="sel-btn" onclick="selectAttr('job',this,'公務員')">🏛 公務員</button>
+      <button class="sel-btn" onclick="selectAttr('job',this,'医療・福祉')">🏥 医療・福祉</button>
+      <button class="sel-btn" onclick="selectAttr('job',this,'美容・サービス')">💅 美容・サービス</button>
+      <button class="sel-btn" onclick="selectAttr('job',this,'IT・クリエイター')">💻 IT・クリエイター</button>
+      <button class="sel-btn" onclick="selectAttr('job',this,'その他')">🙂 その他</button>
+    </div>
+  </div>
+
+  <button class="btn-gold" id="profile-btn" disabled onclick="startQuestions()">
+    次へ進む →
+  </button>
+</div>
+```
+
+  </div>
+
+  <!-- ════════ QUESTIONS ════════ -->
+
+  <div id="screen-questions" class="screen">
+    <div class="card">
+      <div class="top-row">
+        <span class="logo-mark">✦</span>
+        <span class="app-title">口コミ作成</span>
+        <span id="q-counter" style="font-size:12px;color:var(--sub)"></span>
+      </div>
+      <div class="progress-bar" id="prog-questions"></div>
+      <div class="profile-pill" id="profile-pill"></div>
+
+```
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+    <span id="q-icon" style="font-size:24px;"></span>
+    <h2 id="q-text"></h2>
+  </div>
+  <p class="sub-text">当てはまるものを最大2つ選んでください</p>
+
+  <div class="chip-area" id="chip-area"></div>
+
+  <div id="rating-section" style="display:none;">
+    <div class="rating-box">
+      <p class="rating-label">⭐ 総合評価</p>
+      <div class="star-row" id="star-row"></div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-ghost" id="prev-btn" onclick="prevQ()" style="display:none;">← 前へ</button>
+    <button class="btn-gold" id="next-btn" disabled onclick="nextQ()">次の質問へ →</button>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ════════ GENERATING ════════ -->
+
+  <div id="screen-generating" class="screen">
+    <div class="card spinner-screen">
+      <div class="spinner"></div>
+      <p class="load-title">AIが口コミを作成中...</p>
+      <p class="load-sub" id="gen-sub"></p>
+    </div>
+  </div>
+
+  <!-- ════════ RESULT ════════ -->
+
+  <div id="screen-result" class="screen">
+    <div class="card" style="max-width:520px;">
+      <div class="result-top">
+        <span class="celebrate">🎉</span>
+        <p class="result-title">口コミが完成しました！</p>
+        <div class="meta-tags" id="result-meta"></div>
+      </div>
+
+```
+  <div class="review-box">
+    <div class="review-quote">"</div>
+    <span id="review-text"></span>
+  </div>
+
+  <div class="used-words" id="used-words"></div>
+
+  <div class="action-row">
+    <button class="btn-copy" id="copy-btn" onclick="copyReview()">📋 テキストをコピー</button>
+    <button class="btn-line" onclick="sendLine()">
+      <span class="line-badge">LINE</span>で送る
+    </button>
+  </div>
+
+  <div class="guide-box">
+    <p class="guide-text">
+      💡 コピーして <strong>Googleマップ</strong> の口コミ欄に貼り付けてください
+    </p>
+  </div>
+
+  <button class="btn-ghost" style="width:100%;" onclick="resetAll()">もう一度書く</button>
+</div>
+```
+
+  </div>
+
+  <!-- ════════ ADMIN ════════ -->
+
+  <div id="screen-admin" class="screen">
+    <div class="card" style="max-width:600px;">
+      <div class="top-row">
+        <span class="logo-mark">✦</span>
+        <h1 style="font-size:20px;font-weight:700;flex:1;">キーワード管理</h1>
+        <span class="count-badge" id="total-count">0個</span>
+      </div>
+      <p style="font-size:13px;color:var(--sub);margin-bottom:20px;">カテゴリ別にキーワードを登録・削除できます</p>
+
+```
+  <div class="cat-tabs" id="cat-tabs"></div>
+
+  <div class="add-row">
+    <input class="add-input" id="kw-input" placeholder="キーワードを入力してEnter" onkeydown="if(event.key==='Enter')addKeyword()">
+    <button class="add-btn" onclick="addKeyword()">追加</button>
+  </div>
+
+  <div class="kw-area" id="kw-area"></div>
+
+  <div class="admin-footer">
+    <button class="btn-ghost" onclick="showScreen('screen-start')">← お客様画面へ</button>
+    <button class="btn-gold" id="save-btn" style="width:auto;padding:12px 28px;" onclick="saveAdmin()">保存する</button>
+  </div>
+</div>
+```
+
+  </div>
+
+</div>
+
+<script>
+// ────────────────────────────────────
+//  DATA
+// ────────────────────────────────────
+let keywords = {
+  "効果": [
+    "1回で抜けた","8〜9割減った","医療脱毛より抜けると感じた",
+    "他のサロンで抜けなかったのに抜けた","最初からここに来れば良かった",
+    "最短5回で完了できた","思ったより早く終わった","毛量が多い方でも対応してくれた"
+  ],
+  "料金・制度": [
+    "都度払いで助かった","バイト代でも通えた","ローン不要で安心",
+    "コース契約がないので気軽に始めた","無駄なお金がかからない"
+  ],
+  "施術・スピード": [
+    "全身が40分で終わった","ヒゲが10分以内で終わった",
+    "スピーディーで忙しい自分に合っていた","施術がとにかく早い"
+  ],
+  "スタッフ": [
+    "スタッフが優しかった","スタッフが面白くて楽しかった",
+    "丁寧に説明してくれた","気さくで話しやすかった",
+    "明るくて安心できた","初めてでも緊張しなかった"
+  ],
+  "店舗・立地": [
+    "駅近でアクセスが良い","近くにコインパーキングがある",
+    "店内が清潔感あってオシャレ","明るくて爽やかな雰囲気",
+    "男性も女性も入りやすい","子供と一緒でも安心",
+    "居心地が良くてリラックスできた","派手すぎず落ち着いた雰囲気"
+  ],
+  "お悩み解決": [
+    "髭剃りの面倒から解放された","毛深いコンプレックスが解消された",
+    "毎日の自己処理が不要になった","チクチクするストレスがなくなった",
+    "剃り残しのヒヤヒヤがなくなった","スカートやノースリーブが着られるようになった",
+    "お泊まりの不安がなくなった","指の毛が気にならなくなった",
+    "介護脱毛を考えていた","白髪になる前に来られた","家族・恋人に勧められて来た"
+  ],
+  "おすすめ度": [
+    "友達にすぐ教えたくなった","職場の人にも紹介した",
+    "家族も一緒に通っている","迷っている人に絶対おすすめしたい",
+    "紹介でここを知った","SNSで見てきた"
+  ]
+};
+
+const QUESTIONS = [
+  { id:"q1", icon:"✨", text:"脱毛の効果はいかがでしたか？", cat:"効果" },
+  { id:"q2", icon:"💬", text:"スタッフや施術の印象は？", cat:"スタッフ" },
+  { id:"q3", icon:"🏠", text:"お店の雰囲気・立地はいかがでしたか？", cat:"店舗・立地" },
+  { id:"q4", icon:"😌", text:"脱毛前のお悩みや来たきっかけは？", cat:"お悩み解決" },
+  { id:"q5", icon:"💛", text:"料金・システムについて感じたことは？", cat:"料金・制度" }
+];
+
+// ────────────────────────────────────
+//  STATE
+// ────────────────────────────────────
+let state = {
+  store:"", age:"", gender:"", job:"",
+  currentQ: 0,
+  selectedWords: {}, // {q0:[...], q1:[...], ...}
+  questionKws: [],   // [[kw,...], ...]
+  rating: 5,
+  review: ""
+};
+
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+
+function initQuestionKws(){
+  state.questionKws = QUESTIONS.map(q => shuffle(keywords[q.cat]||[]).slice(0,6));
+}
+
+// ────────────────────────────────────
+//  SCREEN MANAGEMENT
+// ────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// Total bar = 6 segments (profile=0, q0..q4, then result)
+function renderProgress(el, filledCount){
+  el.innerHTML = '';
+  for(let i=0;i<6;i++){
+    const d = document.createElement('div');
+    d.className = 'prog-seg' + (i < filledCount ? ' done' : i === filledCount ? ' active' : '');
+    el.appendChild(d);
+  }
+}
+
+// ────────────────────────────────────
+//  START SCREEN
+// ────────────────────────────────────
+function selectStore(btn, store){
+  document.querySelectorAll('.store-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.store = store;
+  const sb = document.getElementById('start-btn');
+  sb.disabled = false;
+  sb.textContent = store + 'で始める →';
+}
+
+function goToProfile(){
+  if(!state.store) return;
+  renderProgress(document.getElementById('prog-profile'), 0);
+  showScreen('screen-profile');
+}
+
+// ────────────────────────────────────
+//  PROFILE SCREEN
+// ────────────────────────────────────
+function selectAttr(attr, btn, val){
+  const grid = btn.closest('.sel-grid');
+  grid.querySelectorAll('.sel-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state[attr] = val;
+  checkProfileComplete();
+}
+
+function checkProfileComplete(){
+  const ok = state.age && state.gender && state.job;
+  const btn = document.getElementById('profile-btn');
+  btn.disabled = !ok;
+  btn.textContent = ok ? '次へ進む →' : 'すべて選んでください';
+}
+
+function startQuestions(){
+  if(!state.age||!state.gender||!state.job) return;
+  initQuestionKws();
+  state.currentQ = 0;
+  state.selectedWords = {};
+  state.rating = 5;
+  renderQuestion();
+  showScreen('screen-questions');
+}
+
+// ────────────────────────────────────
+//  QUESTIONS SCREEN
+// ────────────────────────────────────
+function renderQuestion(){
+  const qi = state.currentQ;
+  const q = QUESTIONS[qi];
+  const kws = state.questionKws[qi] || [];
+  const sel = state.selectedWords[qi] || [];
+  const isLast = qi === QUESTIONS.length - 1;
+
+  // Progress
+  renderProgress(document.getElementById('prog-questions'), qi + 1);
+
+  // Counter
+  document.getElementById('q-counter').textContent = `${qi+1}/${QUESTIONS.length}`;
+
+  // Profile pill
+  const pill = document.getElementById('profile-pill');
+  pill.innerHTML = `
+    <span class="pill-item">📍 ${state.store}</span>
+    <span class="pill-dot">·</span>
+    <span class="pill-item">${state.age}</span>
+    <span class="pill-dot">·</span>
+    <span class="pill-item">${state.gender !== '回答しない' ? state.gender : '―'}</span>
+    <span class="pill-dot">·</span>
+    <span class="pill-item">${state.job}</span>
+  `;
+
+  // Question
+  document.getElementById('q-icon').textContent = q.icon;
+  document.getElementById('q-text').textContent = q.text;
+
+  // Chips
+  const ca = document.getElementById('chip-area');
+  ca.innerHTML = '';
+  kws.forEach(word => {
+    const btn = document.createElement('button');
+    btn.className = 'chip' + (sel.includes(word) ? ' selected' : '');
+    btn.innerHTML = (sel.includes(word) ? '<span style="font-size:11px">✓ </span>' : '') + word;
+    btn.onclick = () => toggleChip(qi, word, btn);
+    ca.appendChild(btn);
+  });
+
+  // Rating (last question)
+  const rs = document.getElementById('rating-section');
+  if(isLast){
+    rs.style.display = 'block';
+    renderStars();
+  } else {
+    rs.style.display = 'none';
+  }
+
+  // Nav
+  const prevBtn = document.getElementById('prev-btn');
+  prevBtn.style.display = qi > 0 ? 'block' : 'none';
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.disabled = sel.length === 0;
+  nextBtn.textContent = isLast ? '✨ 口コミを生成する' : '次の質問へ →';
+}
+
+function toggleChip(qi, word, btn){
+  if(!state.selectedWords[qi]) state.selectedWords[qi] = [];
+  const sel = state.selectedWords[qi];
+  if(sel.includes(word)){
+    state.selectedWords[qi] = sel.filter(w=>w!==word);
+    btn.classList.remove('selected');
+    btn.innerHTML = word;
+  } else if(sel.length < 2){
+    state.selectedWords[qi].push(word);
+    btn.classList.add('selected');
+    btn.innerHTML = '<span style="font-size:11px">✓ </span>' + word;
+  }
+  document.getElementById('next-btn').disabled = state.selectedWords[qi].length === 0;
+}
+
+function renderStars(){
+  const row = document.getElementById('star-row');
+  row.innerHTML = '';
+  for(let n=1;n<=5;n++){
+    const btn = document.createElement('button');
+    btn.className = 'star-btn' + (n <= state.rating ? ' on' : '');
+    btn.textContent = '★';
+    btn.onclick = () => { state.rating = n; renderStars(); };
+    row.appendChild(btn);
+  }
+  const val = document.createElement('span');
+  val.className = 'rating-val';
+  val.textContent = state.rating + '.0';
+  row.appendChild(val);
+}
+
+function prevQ(){
+  if(state.currentQ > 0){ state.currentQ--; renderQuestion(); }
+}
+
+function nextQ(){
+  const qi = state.currentQ;
+  if((state.selectedWords[qi]||[]).length === 0) return;
+  if(qi === QUESTIONS.length - 1){
+    generateReview();
+  } else {
+    state.currentQ++;
+    renderQuestion();
+  }
+}
+
+// ────────────────────────────────────
+//  GENERATE
+// ────────────────────────────────────
+async function generateReview(){
+  const allWords = Object.values(state.selectedWords).flat();
+  const sub = document.getElementById('gen-sub');
+  sub.textContent = `${state.age}・${state.job}らしい自然な文章を生成しています`;
+  showScreen('screen-generating');
+
+  const prompt = `あなたは脱毛サロンの口コミを書くお客様です。
+以下のお客様プロフィールとサロン情報、選択キーワードをもとに、Googleマップに投稿するリアルで自然な口コミを書いてください。
+
+【お客様プロフィール】
+年代：${state.age}　性別：${state.gender}　職業：${state.job}
+
+【サロン基本情報】
+- 都度払い制（ローン・コース契約なし）、バイト代でも通える
+- 最短5回・平均8回・毛量多い方で12回で完了
+- 全身施術約40分、ヒゲ脱毛10分以内のスピーディーな施術
+- 久留米店・筑紫野店・大橋店の3店舗、いずれも駅近・近隣に駐車場あり
+- 医療脱毛より抜けると言われる、他サロンで抜けなかった方も感動
+- 1回で抜ける・8〜9割減ったという声が多数
+- スタッフが優しく気さくで明るく話しやすい
+- 店内は清潔感があり男女・子供も安心、居心地良い
+
+【来店店舗】${state.store}
+【評価】${state.rating}つ星
+
+【選択されたキーワード】
+${allWords.join("、")}
+
+【口コミ作成ルール】
+- ${state.age}・${state.job}らしい自然な言葉遣いで書く
+- ${state.gender === '男性' ? '男性目線のリアルな体験談' : state.gender === '女性' ? '女性目線のリアルな体験談' : 'リアルな体験談'}として書く
+- 5〜7行程度（です・ます調）
+- 選択キーワードをすべて自然に盛り込む
+- お客様の本音・感動・変化が伝わるようにする
+- 余計な前置きは不要、口コミ文章のみ出力
+- 過度な宣伝文句は使わずリアルな体験談として書く`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await res.json();
+    state.review = data.content?.map(c=>c.text||'').join('') || '生成に失敗しました。';
+  } catch(e) {
+    state.review = '通信エラーが発生しました。もう一度お試しください。';
+  }
+
+  renderResult();
+  showScreen('screen-result');
+}
+
+// ────────────────────────────────────
+//  RESULT SCREEN
+// ────────────────────────────────────
+function renderResult(){
+  // Meta tags
+  const meta = document.getElementById('result-meta');
+  const tags = [
+    {text:`📍 ${state.store}`, gold:false},
+    {text:state.age, gold:false},
+    {text:state.gender !== '回答しない' ? state.gender : '―', gold:false},
+    {text:state.job, gold:false},
+    {text:'★'.repeat(state.rating)+'☆'.repeat(5-state.rating), gold:true}
+  ];
+  meta.innerHTML = tags.map(t=>`<span class="meta-tag${t.gold?' gold':''}">${t.text}</span>`).join('');
+
+  // Review
+  document.getElementById('review-text').textContent = state.review;
+
+  // Used words
+  const uw = document.getElementById('used-words');
+  const allWords = Object.values(state.selectedWords).flat();
+  uw.innerHTML = '<span class="used-label">使用キーワード</span>' +
+    allWords.map(w=>`<span class="used-chip">${w}</span>`).join('');
+
+  // Reset copy button
+  const cb = document.getElementById('copy-btn');
+  cb.textContent = '📋 テキストをコピー';
+  cb.classList.remove('copied');
+}
+
+function copyReview(){
+  navigator.clipboard.writeText(state.review).then(()=>{
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ コピー完了！';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='📋 テキストをコピー'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+
+function sendLine(){
+  window.open('https://line.me/R/share?text='+encodeURIComponent(state.review), '_blank');
+}
+
+function resetAll(){
+  state = { store:"", age:"", gender:"", job:"", currentQ:0, selectedWords:{}, questionKws:[], rating:5, review:"" };
+  // Reset store buttons
+  document.querySelectorAll('.store-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('start-btn').disabled = true;
+  document.getElementById('start-btn').textContent = '店舗を選んでください';
+  // Reset profile buttons
+  document.querySelectorAll('.sel-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('profile-btn').disabled = true;
+  document.getElementById('profile-btn').textContent = 'すべて選んでください';
+  showScreen('screen-start');
+}
+
+// ────────────────────────────────────
+//  ADMIN
+// ────────────────────────────────────
+let adminCat = Object.keys(keywords)[0];
+
+function showAdmin(){
+  renderAdminCatTabs();
+  renderAdminKwArea();
+  updateTotalCount();
+  showScreen('screen-admin');
+}
+
+function renderAdminCatTabs(){
+  const el = document.getElementById('cat-tabs');
+  el.innerHTML = Object.keys(keywords).map(cat => `
+    <button class="cat-tab${cat===adminCat?' active':''}" onclick="switchAdminCat('${cat}')">
+      ${cat}<span class="cat-count">(${keywords[cat].length})</span>
+    </button>
+  `).join('');
+  document.getElementById('kw-input').placeholder = `「${adminCat}」にキーワードを追加`;
+}
+
+function switchAdminCat(cat){
+  adminCat = cat;
+  renderAdminCatTabs();
+  renderAdminKwArea();
+}
+
+function renderAdminKwArea(){
+  const el = document.getElementById('kw-area');
+  const kws = keywords[adminCat] || [];
+  if(kws.length === 0){
+    el.innerHTML = '<span class="kw-empty">キーワードなし</span>';
+    return;
+  }
+  el.innerHTML = kws.map((kw,i) => `
+    <div class="kw-chip">
+      <span>${kw}</span>
+      <button class="kw-del" onclick="removeKeyword(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function addKeyword(){
+  const input = document.getElementById('kw-input');
+  const t = input.value.trim();
+  if(!t) return;
+  if(!keywords[adminCat]) keywords[adminCat] = [];
+  if(keywords[adminCat].includes(t)){ input.value=''; return; }
+  keywords[adminCat].push(t);
+  input.value = '';
+  renderAdminCatTabs();
+  renderAdminKwArea();
+  updateTotalCount();
+}
+
+function removeKeyword(idx){
+  keywords[adminCat].splice(idx,1);
+  renderAdminCatTabs();
+  renderAdminKwArea();
+  updateTotalCount();
+}
+
+function updateTotalCount(){
+  const total = Object.values(keywords).flat().length;
+  document.getElementById('total-count').textContent = total + '個登録中';
+}
+
+function saveAdmin(){
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '✓ 保存しました';
+  btn.classList.add('green');
+  setTimeout(()=>{ btn.textContent='保存する'; btn.classList.remove('green'); }, 2000);
+}
+</script>
+
+</body>
+</html>
